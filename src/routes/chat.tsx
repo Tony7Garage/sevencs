@@ -126,7 +126,7 @@ function ChatPage() {
             <div key={message.id} className="flex gap-3">
               <PlayerAvatar
                 name={message.profiles?.display_name ?? "Jogador"}
-                url={message.profiles?.avatar_url}
+                url={message.profiles?.avatar_url ?? null}
                 className="size-9"
               />
               <div className="min-w-0 flex-1">

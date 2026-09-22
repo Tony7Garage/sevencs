@@ -62,12 +62,20 @@ function TeamsPage() {
       if (!member?.teams) return null;
 
       const team = member.teams as { id: string; name: string; code: string; owner_id: string };
-      const { data: members } = await supabase
+      const { data: rows } = await supabase
         .from("team_members")
-        .select("user_id, profiles(display_name, avatar_url, elo, player_id)")
+        .select("user_id")
         .eq("team_id", team.id);
 
-      return { team, members: members ?? [] };
+      const ids = (rows ?? []).map((row) => row.user_id);
+      const { data: profiles } = ids.length
+        ? await supabase
+            .from("profiles")
+            .select("id, display_name, avatar_url, elo, player_id")
+            .in("id", ids)
+        : { data: [] };
+
+      return { team, members: profiles ?? [] };
     },
   });
 
