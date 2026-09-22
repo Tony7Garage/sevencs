@@ -194,16 +194,9 @@ function TeamsPage() {
           </div>
 
           <ul className="mt-6 divide-y divide-border">
-            {current.members.map((member) => {
-              const profile = member.profiles as {
-                display_name: string;
-                avatar_url: string | null;
-                elo: string;
-                player_id: string;
-              } | null;
-              if (!profile) return null;
+            {current.members.map((profile) => {
               return (
-                <li key={member.user_id} className="flex items-center gap-3 py-3">
+                <li key={profile.id} className="flex items-center gap-3 py-3">
                   <PlayerAvatar
                     name={profile.display_name}
                     url={profile.avatar_url}
