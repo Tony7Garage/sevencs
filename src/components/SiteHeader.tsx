@@ -9,10 +9,12 @@ import { useProfile } from "@/hooks/useProfile";
 
 const LINKS = [
   { to: "/", label: "Início" },
+  { to: "/dashboard", label: "Painel" },
   { to: "/simulador", label: "Simulador" },
   { to: "/equipes", label: "Equipes" },
   { to: "/chat", label: "Comunidade" },
   { to: "/perfil", label: "Perfil" },
+  { to: "/configuracoes", label: "Configurações" },
 ] as const;
 
 export function SiteHeader() {

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/hooks/useAuth";
 
 export const Route = createFileRoute("/auth")({
@@ -37,7 +38,7 @@ function AuthPage() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (session) navigate({ to: "/perfil" });
+    if (session) navigate({ to: "/dashboard" });
   }, [session, navigate]);
 
   async function submit(event: React.FormEvent) {
@@ -54,7 +55,12 @@ function AuthPage() {
           },
         });
         if (error) throw error;
-        toast.success("Conta criada! Você já pode jogar.");
+        const { data: signedIn } = await supabase.auth.getSession();
+        if (signedIn.session) {
+          toast.success("Conta criada! Bem-vindo ao Seven CS.");
+        } else {
+          toast.success("Conta criada! Confirme o e-mail que enviamos para entrar.");
+        }
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
@@ -68,11 +74,26 @@ function AuthPage() {
   }
 
   async function google() {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${window.location.origin}/` },
-    });
-    if (error) toast.error(error.message);
+    setBusy(true);
+    try {
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
+      });
+      if (result?.error) {
+        toast.error("Não foi possível entrar com o Google. Tente novamente.");
+        return;
+      }
+      if (result && "redirected" in result && result.redirected) return;
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        toast.success("Conta Google conectada!");
+        navigate({ to: "/dashboard" });
+      }
+    } catch {
+      toast.error("O login com o Google foi cancelado ou falhou.");
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -120,7 +141,7 @@ function AuthPage() {
         <Button type="submit" className="w-full" disabled={busy}>
           {busy ? "Aguarde…" : mode === "login" ? "Entrar" : "Cadastrar"}
         </Button>
-        <Button type="button" variant="secondary" className="w-full" onClick={google}>
+        <Button type="button" variant="secondary" className="w-full" disabled={busy} onClick={google}>
           Continuar com Google
         </Button>
       </form>
