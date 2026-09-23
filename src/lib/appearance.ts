@@ -42,8 +42,8 @@ export function applyAppearance(theme: unknown, accent: unknown) {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
   const nextTheme = normalizeTheme(theme);
-  root.dataset.theme = nextTheme;
-  root.dataset.accent = normalizeAccent(accent);
+  root.dataset['theme'] = nextTheme;
+  root.dataset['accent'] = normalizeAccent(accent);
   root.classList.toggle("dark", nextTheme !== "branco");
   root.style.colorScheme = nextTheme === "branco" ? "light" : "dark";
 }
