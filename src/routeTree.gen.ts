@@ -12,6 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ChatRouteImport } from './routes/chat'
+import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as EquipesRouteImport } from './routes/equipes'
 import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as SimuladorRouteImport } from './routes/simulador'
@@ -29,6 +31,16 @@ const AuthRoute = AuthRouteImport.update({
 const ChatRoute = ChatRouteImport.update({
   id: '/chat',
   path: '/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConfiguracoesRoute = ConfiguracoesRouteImport.update({
+  id: '/configuracoes',
+  path: '/configuracoes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EquipesRoute = EquipesRouteImport.update({
@@ -51,6 +63,8 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/chat': typeof ChatRoute
+  '/configuracoes': typeof ConfiguracoesRoute
+  '/dashboard': typeof DashboardRoute
   '/equipes': typeof EquipesRoute
   '/perfil': typeof PerfilRoute
   '/simulador': typeof SimuladorRoute
@@ -59,6 +73,8 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/chat': typeof ChatRoute
+  '/configuracoes': typeof ConfiguracoesRoute
+  '/dashboard': typeof DashboardRoute
   '/equipes': typeof EquipesRoute
   '/perfil': typeof PerfilRoute
   '/simulador': typeof SimuladorRoute
@@ -68,23 +84,51 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/chat': typeof ChatRoute
+  '/configuracoes': typeof ConfiguracoesRoute
+  '/dashboard': typeof DashboardRoute
   '/equipes': typeof EquipesRoute
   '/perfil': typeof PerfilRoute
   '/simulador': typeof SimuladorRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/chat' | '/equipes' | '/perfil' | '/simulador'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/chat'
+    | '/configuracoes'
+    | '/dashboard'
+    | '/equipes'
+    | '/perfil'
+    | '/simulador'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/chat' | '/equipes' | '/perfil' | '/simulador'
+  to:
+    | '/'
+    | '/auth'
+    | '/chat'
+    | '/configuracoes'
+    | '/dashboard'
+    | '/equipes'
+    | '/perfil'
+    | '/simulador'
   id:
-    '__root__' | '/' | '/auth' | '/chat' | '/equipes' | '/perfil' | '/simulador'
+    | '__root__'
+    | '/'
+    | '/auth'
+    | '/chat'
+    | '/configuracoes'
+    | '/dashboard'
+    | '/equipes'
+    | '/perfil'
+    | '/simulador'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
   ChatRoute: typeof ChatRoute
+  ConfiguracoesRoute: typeof ConfiguracoesRoute
+  DashboardRoute: typeof DashboardRoute
   EquipesRoute: typeof EquipesRoute
   PerfilRoute: typeof PerfilRoute
   SimuladorRoute: typeof SimuladorRoute
@@ -111,6 +155,20 @@ declare module '@tanstack/react-router' {
       path: '/chat'
       fullPath: '/chat'
       preLoaderRoute: typeof ChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/configuracoes': {
+      id: '/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/configuracoes'
+      preLoaderRoute: typeof ConfiguracoesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/equipes': {
@@ -141,6 +199,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
   ChatRoute: ChatRoute,
+  ConfiguracoesRoute: ConfiguracoesRoute,
+  DashboardRoute: DashboardRoute,
   EquipesRoute: EquipesRoute,
   PerfilRoute: PerfilRoute,
   SimuladorRoute: SimuladorRoute,

@@ -14,6 +14,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { SiteHeader } from "@/components/SiteHeader";
 import { AdminPanel } from "@/components/AdminPanel";
 import { Toaster } from "@/components/ui/sonner";
+import { useAppearanceSync } from "@/hooks/useAppearance";
 
 function NotFoundComponent() {
   return (
@@ -111,6 +112,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   errorComponent: ErrorComponent,
 });
 
+function AppearanceSync() {
+  useAppearanceSync();
+  return null;
+}
+
 function RootShell({ children }: { children: ReactNode }) {
   return (
     <html lang="pt-BR" className="dark">
@@ -131,13 +137,14 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <div className="flex min-h-screen flex-col">
+        <AppearanceSync />
         <SiteHeader />
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <main className="flex-1">
           <Outlet />
         </main>
         <footer className="border-t border-border py-6 text-center text-xs text-muted-foreground">
-          Seven CS V0.1 BETA · Simulador independente. Não altera o ranking oficial do Counter-Strike.
+          Seven CS V2 BETA · Simulador independente. Não altera o ranking oficial do Counter-Strike.
         </footer>
         <AdminPanel />
         <Toaster />
