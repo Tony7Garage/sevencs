@@ -109,6 +109,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          accent: string
           avatar_url: string | null
           created_at: string
           display_name: string
@@ -117,11 +118,13 @@ export type Database = {
           losses: number
           player_id: string
           points: number
+          theme: string
           total_deaths: number
           total_kills: number
           wins: number
         }
         Insert: {
+          accent?: string
           avatar_url?: string | null
           created_at?: string
           display_name: string
@@ -130,11 +133,13 @@ export type Database = {
           losses?: number
           player_id: string
           points?: number
+          theme?: string
           total_deaths?: number
           total_kills?: number
           wins?: number
         }
         Update: {
+          accent?: string
           avatar_url?: string | null
           created_at?: string
           display_name?: string
@@ -143,6 +148,7 @@ export type Database = {
           losses?: number
           player_id?: string
           points?: number
+          theme?: string
           total_deaths?: number
           total_kills?: number
           wins?: number
