@@ -3,6 +3,8 @@
 
 create sequence if not exists public.player_id_seq;
 
+-- Move current IDs out of the unique namespace before assigning sequential IDs.
+update public.profiles set player_id = 'v3-' || id::text;
 with numbered as (
   select id, lpad(row_number() over (order by created_at, id)::text, 4, '0') as new_id
   from public.profiles
@@ -27,6 +29,7 @@ begin
 end $$;
 
 alter table public.teams add column if not exists cs_code text, add column if not exists slots_remaining integer not null default 4;
+update public.teams t set slots_remaining = greatest(0, 4 - (select count(*) from public.team_members tm where tm.team_id = t.id));
 alter table public.teams drop constraint if exists teams_slots_remaining_check;
 alter table public.teams add constraint teams_slots_remaining_check check (slots_remaining between 0 and 10);
 
@@ -42,7 +45,6 @@ create table if not exists public.communities (
   min_rank text,
   created_at timestamptz not null default now()
 );
-
 create or replace function public.gen_community_id()
 returns text language plpgsql as $$ begin return lpad(nextval('public.community_id_seq')::text, 4, '0'); end $$;
 alter table public.communities alter column community_id set default public.gen_community_id();
