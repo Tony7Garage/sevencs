@@ -3,10 +3,13 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { applyPoints, calculatePoints, normalizeElo } from "./elo";
 
+const ADMIN_PLAYER_ID = "535226";
+
 async function getAdminClient(userId: string) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data: role } = await supabaseAdmin.from("user_roles").select("role").eq("user_id", userId).eq("role", "admin").maybeSingle();
-  if (!role) throw new Error("Seu ID não tem acesso ao painel administrativo.");
+  const { data: profile, error } = await supabaseAdmin.from("profiles").select("id, player_id").eq("id", userId).maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!profile || profile.player_id !== ADMIN_PLAYER_ID) throw new Error("Seu ID não tem acesso ao painel administrativo.");
   return supabaseAdmin;
 }
 
@@ -19,25 +22,13 @@ export const adminV3ListAdminAccess = createServerFn({ method: "POST" }).middlew
   const supabaseAdmin = await getAdminClient(context.userId);
   const { data: profiles, error } = await supabaseAdmin.from("profiles").select("id, player_id, display_name, created_at").order("player_id", { ascending: true });
   if (error) throw new Error(error.message);
-  const { data: roles, error: rolesError } = await supabaseAdmin.from("user_roles").select("user_id, role").eq("role", "admin");
-  if (rolesError) throw new Error(rolesError.message);
-  const adminIds = new Set((roles ?? []).map((row) => row.user_id));
-  return (profiles ?? []).map((profile) => ({ ...profile, canAccess: adminIds.has(profile.id) }));
+  return (profiles ?? []).map((profile) => ({ ...profile, canAccess: profile.player_id === ADMIN_PLAYER_ID }));
 });
 
 export const adminV3SetAdminAccess = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((data: unknown) => z.object({ playerId: z.string(), enabled: z.boolean() }).parse(data)).handler(async ({ data, context }) => {
-  const supabaseAdmin = await getAdminClient(context.userId);
-  const { data: profile } = await supabaseAdmin.from("profiles").select("id, player_id").eq("player_id", data.playerId).maybeSingle();
-  if (!profile) throw new Error("Jogador não encontrado.");
-  if (profile.id === context.userId && !data.enabled) throw new Error("Você não pode remover seu próprio acesso administrativo.");
-
-  if (data.enabled) {
-    const { error } = await supabaseAdmin.from("user_roles").upsert({ user_id: profile.id, role: "admin" }, { onConflict: "user_id,role" });
-    if (error) throw new Error(error.message);
-  } else {
-    const { error } = await supabaseAdmin.from("user_roles").delete().eq("user_id", profile.id).eq("role", "admin");
-    if (error) throw new Error(error.message);
-  }
+  await getAdminClient(context.userId);
+  if (data.playerId !== ADMIN_PLAYER_ID) throw new Error("Somente o ID administrativo definido pode acessar o painel.");
+  if (!data.enabled) throw new Error("O acesso do ID administrativo principal não pode ser removido.");
   return { ok: true as const };
 });
 
