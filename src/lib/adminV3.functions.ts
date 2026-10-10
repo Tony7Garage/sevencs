@@ -11,21 +11,13 @@ async function getAdminClient(userId: string) {
   if (error) throw new Error(error.message);
   if (!profile) throw new Error("Perfil administrativo não encontrado.");
   if (profile.player_id === ADMIN_PLAYER_ID) return supabaseAdmin;
-
-  const { data: adminRow, error: adminError } = await (supabaseAdmin as any)
-    .from("admin_access")
-    .select("player_id")
-    .eq("player_id", profile.player_id)
-    .maybeSingle();
+  const { data: adminRow, error: adminError } = await (supabaseAdmin as any).from("admin_access").select("player_id").eq("player_id", profile.player_id).maybeSingle();
   if (adminError) throw new Error(adminError.message);
   if (!adminRow) throw new Error("Seu ID não tem acesso ao painel administrativo.");
   return supabaseAdmin;
 }
 
-export const adminV3Unlock = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
-  await getAdminClient(context.userId);
-  return { ok: true as const };
-});
+export const adminV3Unlock = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => { await getAdminClient(context.userId); return { ok: true as const }; });
 
 export const adminV3ListAdminAccess = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
   const supabaseAdmin = await getAdminClient(context.userId);
@@ -51,34 +43,20 @@ export const adminV3SetAdminAccess = createServerFn({ method: "POST" }).middlewa
 
 export const adminV3ListUsers = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
   const supabaseAdmin = await getAdminClient(context.userId);
-  const { data: profiles, error } = await (supabaseAdmin as any)
-    .from("profiles")
-    .select("id, player_id, display_name, avatar_url, elo, points, wins, losses, total_kills, total_deaths, created_at, last_seen")
-    .order("last_seen", { ascending: false, nullsFirst: false });
+  const { data: profiles, error } = await (supabaseAdmin as any).from("profiles").select("id, player_id, display_name, avatar_url, elo, points, wins, losses, total_kills, total_deaths, created_at, last_seen").order("last_seen", { ascending: false, nullsFirst: false });
   if (error) throw new Error(error.message);
   const now = Date.now();
-  return (profiles ?? []).map((profile: any) => ({
-    ...profile,
-    online: !!profile.last_seen && now - new Date(profile.last_seen).getTime() <= 120000,
-    kd: profile.total_deaths > 0 ? Number((profile.total_kills / profile.total_deaths).toFixed(2)) : profile.total_kills,
-  }));
+  return (profiles ?? []).map((profile: any) => ({ ...profile, online: !!profile.last_seen && now - new Date(profile.last_seen).getTime() <= 120000, kd: profile.total_deaths > 0 ? Number((profile.total_kills / profile.total_deaths).toFixed(2)) : profile.total_kills }));
 });
 
 export const adminV3UpdatePlayer = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((data: unknown) => z.object({
-  playerId: z.string(),
-  newPlayerId: z.string().regex(/^\d{4,}$/).optional(),
-  displayName: z.string().min(1).max(80).optional(),
-  avatarUrl: z.string().max(1000).optional(),
-  elo: z.string().optional(),
-  points: z.number().int().min(0).optional(),
-  wins: z.number().int().min(0).optional(),
-  losses: z.number().int().min(0).optional(),
-  totalKills: z.number().int().min(0).optional(),
-  totalDeaths: z.number().int().min(0).optional(),
+  playerId: z.string(), newPlayerId: z.string().regex(/^\d{4,}$/).optional(), displayName: z.string().min(1).max(80).optional(), avatarUrl: z.string().max(1000).optional(), elo: z.string().optional(), points: z.number().int().min(0).optional(), wins: z.number().int().min(0).optional(), losses: z.number().int().min(0).optional(), totalKills: z.number().int().min(0).optional(), totalDeaths: z.number().int().min(0).optional(),
 }).parse(data)).handler(async ({ data, context }) => {
   const supabaseAdmin = await getAdminClient(context.userId);
-  const { data: profile } = await (supabaseAdmin as any).from("profiles").select("id").eq("player_id", data.playerId).maybeSingle();
+  const { data: profile } = await (supabaseAdmin as any).from("profiles").select("id, player_id").eq("player_id", data.playerId).maybeSingle();
   if (!profile) throw new Error("Jogador não encontrado.");
+  if (profile.player_id === ADMIN_PLAYER_ID && data.newPlayerId && data.newPlayerId !== ADMIN_PLAYER_ID) throw new Error("O ID do administrador principal não pode ser alterado.");
+  if (data.newPlayerId === ADMIN_PLAYER_ID && data.playerId !== ADMIN_PLAYER_ID) throw new Error("O ID 535226 pertence ao administrador principal.");
   if (data.newPlayerId && data.newPlayerId !== data.playerId) {
     const { data: existing } = await (supabaseAdmin as any).from("profiles").select("id").eq("player_id", data.newPlayerId).maybeSingle();
     if (existing) throw new Error("Esse novo ID já está sendo usado.");
@@ -96,6 +74,9 @@ export const adminV3UpdatePlayer = createServerFn({ method: "POST" }).middleware
   if (!Object.keys(update).length) throw new Error("Nenhuma alteração informada.");
   const { error } = await (supabaseAdmin as any).from("profiles").update(update).eq("id", profile.id);
   if (error) throw new Error(error.message);
+  if (data.newPlayerId && data.newPlayerId !== data.playerId) {
+    await (supabaseAdmin as any).from("admin_access").update({ player_id: data.newPlayerId }).eq("player_id", data.playerId);
+  }
   return { ok: true as const };
 });
 
