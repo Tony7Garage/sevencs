@@ -1,13 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { calculatePoints } from "./elo";
 
 const schema = z.object({
   result: z.enum(["win", "loss"]),
-  kills: z.number().int().min(0).max(200),
-  deaths: z.number().int().min(0).max(200),
-  screenshot: z.string().max(12_000_000).optional(),
+  kd: z.number().min(0).max(20),
+  screenshot: z.string().min(32).max(12_000_000),
 });
 
 export const submitMatchForReview = createServerFn({ method: "POST" })
@@ -28,14 +26,14 @@ export const submitMatchForReview = createServerFn({ method: "POST" })
       .eq("id", 1)
       .maybeSingle();
     const multiplier = settings?.multiplier_enabled ? Number(settings.multiplier) || 1 : 1;
-    const { kd } = calculatePoints({ result: data.result, kills: data.kills, deaths: data.deaths, multiplier });
 
     const { error } = await supabaseAdmin.from("matches").insert({
       user_id: context.userId,
       result: data.result,
-      kills: data.kills,
-      deaths: data.deaths,
-      kd,
+      kills: 0,
+      deaths: 0,
+      kd: Number(data.kd.toFixed(2)),
+      submitted_kd: Number(data.kd.toFixed(2)),
       points_delta: 0,
       multiplier,
       elo_before: profile.elo,
@@ -43,12 +41,12 @@ export const submitMatchForReview = createServerFn({ method: "POST" })
       points_before: profile.points,
       points_after: profile.points,
       status: "pending",
-      screenshot_url: data.screenshot ?? null,
+      screenshot_url: data.screenshot,
       submitted_result: data.result,
-      submitted_kills: data.kills,
-      submitted_deaths: data.deaths,
+      submitted_kills: null,
+      submitted_deaths: null,
     });
     if (error) throw new Error(error.message);
 
-    return { status: "pending" as const, kd, message: "Aguardando análise do administrador." };
+    return { status: "pending" as const, kd: data.kd, message: "Aguardando análise do administrador." };
   });
