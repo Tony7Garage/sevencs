@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AuthGate } from "@/components/AuthGate";
-import { analyzeScreenshot } from "@/lib/match.functions";
 import { submitMatchForReview } from "@/lib/matchReview.functions";
 
 export const Route = createFileRoute("/simulador")({
@@ -24,14 +23,10 @@ export const Route = createFileRoute("/simulador")({
 });
 
 function SimulatorPage() {
-  const analyze = useServerFn(analyzeScreenshot);
   const submit = useServerFn(submitMatchForReview);
   const [preview, setPreview] = useState<string | null>(null);
-  const [kills, setKills] = useState("");
-  const [deaths, setDeaths] = useState("");
+  const [kd, setKd] = useState("");
   const [result, setResult] = useState<"win" | "loss" | null>(null);
-  const [note, setNote] = useState<string | null>(null);
-  const [analyzing, setAnalyzing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [pending, setPending] = useState(false);
 
@@ -44,25 +39,19 @@ function SimulatorPage() {
     });
     setPreview(base64);
     setPending(false);
-    setAnalyzing(true);
-    try {
-      const analysis = await analyze({ data: { image: base64 } });
-      if (analysis.kills !== null) setKills(String(analysis.kills));
-      if (analysis.deaths !== null) setDeaths(String(analysis.deaths));
-      if (analysis.result) setResult(analysis.result);
-      setNote(analysis.note);
-    } catch {
-      setNote("Não foi possível analisar o print. Informe os números manualmente.");
-    } finally { setAnalyzing(false); }
   }
 
   async function confirm() {
+    if (!preview) { toast.error("Envie o print da partida."); return; }
     if (!result) { toast.error("Informe se foi Vitória ou Derrota."); return; }
-    const k = Number(kills), d = Number(deaths);
-    if (!Number.isFinite(k) || !Number.isFinite(d) || k < 0 || d < 0) { toast.error("Informe kills e deaths válidos."); return; }
+    const value = Number(kd.replace(",", "."));
+    if (!Number.isFinite(value) || value < 0 || value > 20) {
+      toast.error("Informe um KD válido, por exemplo 1.00.");
+      return;
+    }
     setSaving(true);
     try {
-      await submit({ data: { result, kills: Math.round(k), deaths: Math.round(d), screenshot: preview ?? undefined } });
+      await submit({ data: { result, kd: Number(value.toFixed(2)), screenshot: preview } });
       setPending(true);
       toast.success("Partida enviada para análise!");
     } catch (error) {
@@ -74,21 +63,21 @@ function SimulatorPage() {
     <div className="mx-auto max-w-3xl space-y-6 px-4 py-10">
       <header>
         <h1 className="title-caps text-2xl">Simulador de Rank</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Envie o print, confira os dados e aguarde a análise administrativa.</p>
+        <p className="mt-2 text-sm text-muted-foreground">Envie o print, informe o seu KD e aguarde a análise administrativa.</p>
       </header>
 
       <section className="panel rounded-lg p-6">
         <Label htmlFor="print" className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-surface-2 p-8 text-center text-sm text-muted-foreground hover:border-primary/60">
           <Upload className="size-6 text-primary" />
-          {analyzing ? "Analisando o print…" : "Clique para enviar o print da partida"}
+          Clique para enviar o print da partida
         </Label>
         <input id="print" type="file" accept="image/*" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) void onFile(file); }} />
         {preview && <img src={preview} alt="Print da partida" className="mt-4 max-h-64 w-full rounded-md border border-border object-contain" />}
-        {note && <p className="mt-3 text-xs text-muted-foreground">{note}</p>}
 
-        <div className="mt-6 grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2"><Label htmlFor="kills">Kills</Label><Input id="kills" inputMode="numeric" value={kills} onChange={(event) => setKills(event.target.value)} /></div>
-          <div className="space-y-2"><Label htmlFor="deaths">Deaths</Label><Input id="deaths" inputMode="numeric" value={deaths} onChange={(event) => setDeaths(event.target.value)} /></div>
+        <div className="mt-6 space-y-2">
+          <Label htmlFor="kd">Seu KD na partida</Label>
+          <Input id="kd" inputMode="decimal" placeholder="Ex.: 1.00" value={kd} onChange={(event) => setKd(event.target.value)} />
+          <p className="text-xs text-muted-foreground">O Seven CS não vai tentar descobrir automaticamente qual dos 5 jogadores do print é você. Informe somente o seu KD.</p>
         </div>
         <div className="mt-4 flex gap-2">
           <Button variant={result === "win" ? "default" : "secondary"} className="flex-1" onClick={() => setResult("win")}>Vitória</Button>
@@ -100,7 +89,7 @@ function SimulatorPage() {
       {pending && (
         <section className="panel rounded-lg border border-primary/30 p-6">
           <h2 className="title-caps text-sm text-primary">Aguardando análise</h2>
-          <p className="mt-2 text-sm text-muted-foreground">Sua partida foi enviada. Elo, pontos, vitórias e K/D só serão atualizados depois que um administrador aprovar os dados.</p>
+          <p className="mt-2 text-sm text-muted-foreground">Sua partida foi enviada. O administrador vai conferir seu nome da Steam, o KD informado e o print antes de aplicar pontos, Elo e estatísticas.</p>
         </section>
       )}
 
