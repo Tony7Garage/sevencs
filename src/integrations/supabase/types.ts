@@ -4,63 +4,16 @@ export type Database = {
   __InternalSupabase: { PostgrestVersion: "14.5" }
   public: {
     Tables: {
-      global_settings: {
-        Row: { id: number; multiplier: number; multiplier_enabled: boolean; updated_at: string }
-        Insert: { id?: number; multiplier?: number; multiplier_enabled?: boolean; updated_at?: string }
-        Update: { id?: number; multiplier?: number; multiplier_enabled?: boolean; updated_at?: string }
-        Relationships: []
-      }
-      matches: {
-        Row: {
-          created_at: string; deaths: number; elo_after: string; elo_before: string; id: string; kd: number; kills: number; multiplier: number; points_after: number; points_before: number; points_delta: number; result: string; user_id: string;
-          status: string; screenshot_url: string | null; submitted_kd: number | null; submitted_result: string | null; submitted_kills: number | null; submitted_deaths: number | null; verified_result: string | null; verified_kills: number | null; verified_deaths: number | null; reviewed_by: string | null; reviewed_at: string | null; review_note: string | null;
-        }
-        Insert: {
-          created_at?: string; deaths?: number; elo_after: string; elo_before: string; id?: string; kd?: number; kills?: number; multiplier?: number; points_after?: number; points_before?: number; points_delta?: number; result: string; user_id: string;
-          status?: string; screenshot_url?: string | null; submitted_kd?: number | null; submitted_result?: string | null; submitted_kills?: number | null; submitted_deaths?: number | null; verified_result?: string | null; verified_kills?: number | null; verified_deaths?: number | null; reviewed_by?: string | null; reviewed_at?: string | null; review_note?: string | null;
-        }
-        Update: {
-          created_at?: string; deaths?: number; elo_after?: string; elo_before?: string; id?: string; kd?: number; kills?: number; multiplier?: number; points_after?: number; points_before?: number; points_delta?: number; result?: string; user_id?: string;
-          status?: string; screenshot_url?: string | null; submitted_kd?: number | null; submitted_result?: string | null; submitted_kills?: number | null; submitted_deaths?: number | null; verified_result?: string | null; verified_kills?: number | null; verified_deaths?: number | null; reviewed_by?: string | null; reviewed_at?: string | null; review_note?: string | null;
-        }
-        Relationships: []
-      }
-      messages: {
-        Row: { channel: string; content: string; created_at: string; id: string; user_id: string }
-        Insert: { channel?: string; content: string; created_at?: string; id?: string; user_id: string }
-        Update: { channel?: string; content?: string; created_at?: string; id?: string; user_id?: string }
-        Relationships: []
-      }
-      profiles: {
-        Row: { accent: string; avatar_url: string | null; created_at: string; display_name: string; elo: string; id: string; losses: number; player_id: string; points: number; theme: string; total_deaths: number; total_kills: number; wins: number; steam_name: string | null; last_seen: string | null }
-        Insert: { accent?: string; avatar_url?: string | null; created_at?: string; display_name: string; elo?: string; id: string; losses?: number; player_id: string; points?: number; theme?: string; total_deaths?: number; total_kills?: number; wins?: number; steam_name?: string | null; last_seen?: string | null }
-        Update: { accent?: string; avatar_url?: string | null; created_at?: string; display_name?: string; elo?: string; id?: string; losses?: number; player_id?: string; points?: number; theme?: string; total_deaths?: number; total_kills?: number; wins?: number; steam_name?: string | null; last_seen?: string | null }
-        Relationships: []
-      }
-      team_members: {
-        Row: { id: string; joined_at: string; team_id: string; user_id: string }
-        Insert: { id?: string; joined_at?: string; team_id: string; user_id: string }
-        Update: { id?: string; joined_at?: string; team_id?: string; user_id?: string }
-        Relationships: [{ foreignKeyName: "team_members_team_id_fkey"; columns: ["team_id"]; isOneToOne: false; referencedRelation: "teams"; referencedColumns: ["id"] }]
-      }
-      teams: {
-        Row: { code: string; created_at: string; id: string; name: string; owner_id: string }
-        Insert: { code: string; created_at?: string; id?: string; name: string; owner_id: string }
-        Update: { code?: string; created_at?: string; id?: string; name?: string; owner_id?: string }
-        Relationships: []
-      }
-      user_roles: {
-        Row: { created_at: string; id: string; role: Database["public"]["Enums"]["app_role"]; user_id: string }
-        Insert: { created_at?: string; id?: string; role: Database["public"]["Enums"]["app_role"]; user_id: string }
-        Update: { created_at?: string; id?: string; role?: Database["public"]["Enums"]["app_role"]; user_id?: string }
-        Relationships: []
-      }
+      global_settings: { Row: { id: number; multiplier: number; multiplier_enabled: boolean; updated_at: string }; Insert: { id?: number; multiplier?: number; multiplier_enabled?: boolean; updated_at?: string }; Update: { id?: number; multiplier?: number; multiplier_enabled?: boolean; updated_at?: string }; Relationships: [] }
+      matches: { Row: { created_at: string; deaths: number; elo_after: string; elo_before: string; id: string; kd: number; kills: number; multiplier: number; points_after: number; points_before: number; points_delta: number; result: string; user_id: string; status: string; screenshot_url: string | null; submitted_kd: number | null; submitted_result: string | null; submitted_kills: number | null; submitted_deaths: number | null; verified_result: string | null; verified_kills: number | null; verified_deaths: number | null; reviewed_by: string | null; reviewed_at: string | null; review_note: string | null }; Insert: { created_at?: string; deaths?: number; elo_after: string; elo_before: string; id?: string; kd?: number; kills?: number; multiplier?: number; points_after?: number; points_before?: number; points_delta?: number; result: string; user_id: string; status?: string; screenshot_url?: string | null; submitted_kd?: number | null; submitted_result?: string | null; submitted_kills?: number | null; submitted_deaths?: number | null; verified_result?: string | null; verified_kills?: number | null; verified_deaths?: number | null; reviewed_by?: string | null; reviewed_at?: string | null; review_note?: string | null }; Update: { created_at?: string; deaths?: number; elo_after?: string; elo_before?: string; id?: string; kd?: number; kills?: number; multiplier?: number; points_after?: number; points_before?: number; points_delta?: number; result?: string; user_id?: string; status?: string; screenshot_url?: string | null; submitted_kd?: number | null; submitted_result?: string | null; submitted_kills?: number | null; submitted_deaths?: number | null; verified_result?: string | null; verified_kills?: number | null; verified_deaths?: number | null; reviewed_by?: string | null; reviewed_at?: string | null; review_note?: string | null }; Relationships: [] }
+      messages: { Row: { channel: string; content: string; created_at: string; id: string; user_id: string }; Insert: { channel?: string; content: string; created_at?: string; id?: string; user_id: string }; Update: { channel?: string; content?: string; created_at?: string; id?: string; user_id?: string }; Relationships: [] }
+      profiles: { Row: { accent: string; avatar_url: string | null; created_at: string; display_name: string; elo: string; id: string; losses: number; player_id: string; points: number; theme: string; total_deaths: number; total_kills: number; wins: number; steam_name: string | null; last_seen: string | null }; Insert: { accent?: string; avatar_url?: string | null; created_at?: string; display_name: string; elo?: string; id: string; losses?: number; player_id: string; points?: number; theme?: string; total_deaths?: number; total_kills?: number; wins?: number; steam_name?: string | null; last_seen?: string | null }; Update: { accent?: string; avatar_url?: string | null; created_at?: string; display_name?: string; elo?: string; id?: string; losses?: number; player_id?: string; points?: number; theme?: string; total_deaths?: number; total_kills?: number; wins?: number; steam_name?: string | null; last_seen?: string | null }; Relationships: [] }
+      team_members: { Row: { id: string; joined_at: string; team_id: string; user_id: string }; Insert: { id?: string; joined_at?: string; team_id: string; user_id: string }; Update: { id?: string; joined_at?: string; team_id?: string; user_id?: string }; Relationships: [{ foreignKeyName: "team_members_team_id_fkey"; columns: ["team_id"]; isOneToOne: false; referencedRelation: "teams"; referencedColumns: ["id"] }] }
+      teams: { Row: { code: string; created_at: string; id: string; name: string; owner_id: string }; Insert: { code: string; created_at?: string; id?: string; name: string; owner_id: string }; Update: { code?: string; created_at?: string; id?: string; name?: string; owner_id?: string }; Relationships: [] }
+      user_roles: { Row: { created_at: string; id: string; role: Database["public"]["Enums"]["app_role"]; user_id: string }; Insert: { created_at?: string; id?: string; role: Database["public"]["Enums"]["app_role"]; user_id: string }; Update: { created_at?: string; id?: string; role?: Database["public"]["Enums"]["app_role"]; user_id?: string }; Relationships: [] }
     }
     Views: { [_ in never]: never }
-    Functions: {
-      gen_player_id: { Args: never; Returns: string }
-      has_role: { Args: { _role: Database["public"]["Enums"]["app_role"]; _user_id: string }; Returns: boolean }
-    }
+    Functions: { gen_player_id: { Args: never; Returns: string }; has_role: { Args: { _role: Database["public"]["Enums"]["app_role"]; _user_id: string }; Returns: boolean } }
     Enums: { app_role: "admin" | "user" }
     CompositeTypes: { [_ in never]: never }
   }
@@ -73,4 +26,4 @@ export type TablesInsert<DefaultSchemaTableNameOrOptions extends keyof DefaultSc
 export type TablesUpdate<DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals }, TableName extends (DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals } ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] : never) = never> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals } ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends { Update: infer U } ? U : never : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"] ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends { Update: infer U } ? U : never : never
 export type Enums<DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"] | { schema: keyof DatabaseWithoutInternals }, EnumName extends (DefaultSchemaEnumNameOrOptions extends { schema: keyof DatabaseWithoutInternals } ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"] : never) = never> = DefaultSchemaEnumNameOrOptions extends { schema: keyof DatabaseWithoutInternals } ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName] : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"] ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions] : never
 export type CompositeTypes<PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"] | { schema: keyof DatabaseWithoutInternals }, CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends { schema: keyof DatabaseWithoutInternals } ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"] : never) = never> = PublicCompositeTypeNameOrOptions extends { schema: keyof DatabaseWithoutInternals } ? DatabaseWithoutInternals[PublicSchema["CompositeTypes"]][CompositeTypeName] : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"] ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions] : never
-export const Constants = { public: { Enums: { app_role: ["admin", "user"] } } } as const
+export const Constants = { public: { Enums: { app_role: ["admin", "user"] } } as const }
