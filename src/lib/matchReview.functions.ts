@@ -4,6 +4,8 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const schema = z.object({
   result: z.enum(["win", "loss"]),
+  kills: z.number().int().min(0).max(100),
+  deaths: z.number().int().min(0).max(100),
   kd: z.number().min(0).max(20),
   screenshot: z.string().min(32).max(12_000_000),
 });
@@ -30,8 +32,8 @@ export const submitMatchForReview = createServerFn({ method: "POST" })
     const { error } = await supabaseAdmin.from("matches").insert({
       user_id: context.userId,
       result: data.result,
-      kills: 0,
-      deaths: 0,
+      kills: data.kills,
+      deaths: data.deaths,
       kd: Number(data.kd.toFixed(2)),
       submitted_kd: Number(data.kd.toFixed(2)),
       points_delta: 0,
@@ -43,8 +45,8 @@ export const submitMatchForReview = createServerFn({ method: "POST" })
       status: "pending",
       screenshot_url: data.screenshot,
       submitted_result: data.result,
-      submitted_kills: null,
-      submitted_deaths: null,
+      submitted_kills: data.kills,
+      submitted_deaths: data.deaths,
     });
     if (error) throw new Error(error.message);
 
