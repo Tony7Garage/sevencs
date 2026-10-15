@@ -23,7 +23,9 @@ export const adminV3ListAdminAccess = createServerFn({ method: "POST" }).middlew
   const supabaseAdmin = await getAdminClient(context.userId);
   const { data, error } = await (supabaseAdmin as any).from("admin_access").select("player_id, created_at").order("created_at", { ascending: true });
   if (error) throw new Error(error.message);
-  return data ?? [{ player_id: ADMIN_PLAYER_ID, created_at: null }];
+  const rows = data ?? [];
+  if (!rows.some((row: any) => row.player_id === ADMIN_PLAYER_ID)) rows.unshift({ player_id: ADMIN_PLAYER_ID, created_at: null });
+  return rows;
 });
 
 export const adminV3SetAdminAccess = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((data: unknown) => z.object({ playerId: z.string().regex(/^\d{4,}$/), enabled: z.boolean() }).parse(data)).handler(async ({ data, context }) => {
@@ -41,16 +43,31 @@ export const adminV3SetAdminAccess = createServerFn({ method: "POST" }).middlewa
   return { ok: true as const };
 });
 
+export const adminV3GetMultiplier = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
+  const supabaseAdmin = await getAdminClient(context.userId);
+  const { data, error } = await supabaseAdmin.from("global_settings").select("multiplier_enabled, multiplier").eq("id", 1).maybeSingle();
+  if (error) throw new Error(error.message);
+  return { enabled: Boolean(data?.multiplier_enabled), multiplier: Number(data?.multiplier) || 1 };
+});
+
+export const adminV3SetMultiplier = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((data: unknown) => z.object({ enabled: z.boolean(), multiplier: z.number().min(1).max(100).finite() }).parse(data)).handler(async ({ data, context }) => {
+  const supabaseAdmin = await getAdminClient(context.userId);
+  const value = Number(data.multiplier.toFixed(1));
+  const { error } = await supabaseAdmin.from("global_settings").update({ multiplier_enabled: data.enabled, multiplier: value, updated_at: new Date().toISOString() }).eq("id", 1);
+  if (error) throw new Error(error.message);
+  return { enabled: data.enabled, multiplier: value };
+});
+
 export const adminV3ListUsers = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
   const supabaseAdmin = await getAdminClient(context.userId);
-  const { data: profiles, error } = await (supabaseAdmin as any).from("profiles").select("id, player_id, display_name, avatar_url, elo, points, wins, losses, total_kills, total_deaths, created_at, last_seen").order("last_seen", { ascending: false, nullsFirst: false });
+  const { data: profiles, error } = await (supabaseAdmin as any).from("profiles").select("id, player_id, display_name, steam_name, avatar_url, elo, points, wins, losses, total_kills, total_deaths, created_at, last_seen").order("last_seen", { ascending: false, nullsFirst: false });
   if (error) throw new Error(error.message);
   const now = Date.now();
   return (profiles ?? []).map((profile: any) => ({ ...profile, online: !!profile.last_seen && now - new Date(profile.last_seen).getTime() <= 120000, kd: profile.total_deaths > 0 ? Number((profile.total_kills / profile.total_deaths).toFixed(2)) : profile.total_kills }));
 });
 
 export const adminV3UpdatePlayer = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((data: unknown) => z.object({
-  playerId: z.string(), newPlayerId: z.string().regex(/^\d{4,}$/).optional(), displayName: z.string().min(1).max(80).optional(), avatarUrl: z.string().max(1000).optional(), elo: z.string().optional(), points: z.number().int().min(0).optional(), wins: z.number().int().min(0).optional(), losses: z.number().int().min(0).optional(), totalKills: z.number().int().min(0).optional(), totalDeaths: z.number().int().min(0).optional(),
+  playerId: z.string(), newPlayerId: z.string().regex(/^\d{4,}$/).optional(), displayName: z.string().min(1).max(80).optional(), steamName: z.string().max(80).optional(), avatarUrl: z.string().max(1000).optional(), elo: z.string().optional(), points: z.number().int().min(0).optional(), wins: z.number().int().min(0).optional(), losses: z.number().int().min(0).optional(), totalKills: z.number().int().min(0).optional(), totalDeaths: z.number().int().min(0).optional(),
 }).parse(data)).handler(async ({ data, context }) => {
   const supabaseAdmin = await getAdminClient(context.userId);
   const { data: profile } = await (supabaseAdmin as any).from("profiles").select("id, player_id").eq("player_id", data.playerId).maybeSingle();
@@ -64,6 +81,7 @@ export const adminV3UpdatePlayer = createServerFn({ method: "POST" }).middleware
   const update: Record<string, unknown> = {};
   if (data.newPlayerId) update.player_id = data.newPlayerId;
   if (data.displayName !== undefined) update.display_name = data.displayName;
+  if (data.steamName !== undefined) update.steam_name = data.steamName;
   if (data.avatarUrl !== undefined) update.avatar_url = data.avatarUrl;
   if (data.elo !== undefined) update.elo = data.elo;
   if (data.points !== undefined) update.points = data.points;
@@ -82,7 +100,7 @@ export const adminV3UpdatePlayer = createServerFn({ method: "POST" }).middleware
 
 export const adminV3PendingMatches = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
   const supabaseAdmin = await getAdminClient(context.userId);
-  const { data: matches, error } = await supabaseAdmin.from("matches").select("id, user_id, result, kills, deaths, kd, screenshot_url, submitted_result, submitted_kills, submitted_deaths, status, created_at, profiles(display_name, player_id)").eq("status", "pending").order("created_at", { ascending: true });
+  const { data: matches, error } = await supabaseAdmin.from("matches").select("id, user_id, result, kills, deaths, kd, screenshot_url, submitted_kd, submitted_result, submitted_kills, submitted_deaths, status, created_at, profiles(display_name, player_id, steam_name)").eq("status", "pending").order("created_at", { ascending: true });
   if (error) throw new Error(error.message);
   return matches ?? [];
 });
@@ -100,7 +118,7 @@ export const adminV3ReviewMatch = createServerFn({ method: "POST" }).middleware(
     if (error) throw new Error(error.message);
     return { status: "invalid" as const };
   }
-  if (!result || !Number.isInteger(kills) || !Number.isInteger(deaths)) throw new Error("Dados da partida incompletos.");
+  if (!result || !Number.isInteger(kills) || !Number.isInteger(deaths)) throw new Error("Informe kills e deaths verificados pelo print antes de aprovar.");
   const { data: profile, error: profileError } = await supabaseAdmin.from("profiles").select("id, elo, points, wins, losses, total_kills, total_deaths").eq("id", match.user_id).single();
   if (profileError || !profile) throw new Error("Perfil do jogador não encontrado.");
   const { data: settings } = await supabaseAdmin.from("global_settings").select("multiplier_enabled, multiplier").eq("id", 1).maybeSingle();
